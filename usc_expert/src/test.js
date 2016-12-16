@@ -4,5 +4,9 @@ var fb = new fbManager("EAAJZAbxXrAugBAHFDJqiB6NducoAPUNNflV8l51n2Gcg8oYrp0bJPC9
 
 var p = fb.getAllEvents();
 p.then(function (arr) {
-    console.log(arr);
+    // console.log(arr);
+
+    var events = fb.findEvents(new Date(), new Date(new Date().getTime() + 1000 * 45 * 24 * 3600));
+    console.log(events);
 });
+
