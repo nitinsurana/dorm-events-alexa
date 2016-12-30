@@ -215,12 +215,16 @@ function getDateFromSlot(rawDate) {
     var eventDate = {};
 
     // if could not parse data must be one of the other formats
-    if (isNaN(date)) {
+    if (isNaN(date) || rawDate.match(/\d{4}-\d{2}/)) {      //year & month only date
         // to find out what type of date this is, we can split it and count how many parts we have see comments above.
         var res = rawDate.split("-");
         // if we have 2 bits that include a 'W' week number
         if (res.length === 2 && res[1].indexOf('W') > -1) {
             var dates = getWeekData(res);
+            eventDate["startDate"] = new Date(dates.startDate);
+            eventDate["endDate"] = new Date(dates.endDate);
+        } else if (rawDate.match(/\d{4}-\d{2}/)) {
+            var dates = getMonthData(res);
             eventDate["startDate"] = new Date(dates.startDate);
             eventDate["endDate"] = new Date(dates.endDate);
             // if we have 3 bits, we could either have a valid date (which would have parsed already) or a weekend
@@ -275,6 +279,18 @@ function getWeekData(res) {
         };
     }
 }
+
+// Given a month number return the dates for both the start date and the end date
+function getMonthData(res) {
+    if (res.length === 2) {
+
+        return {
+            startDate: moment(res.join("-")).toDate(),
+            endDate: moment(res.join("-")).add(1, 'month').subtract(1, 'days').toDate()
+        };
+    }
+}
+
 
 // Used to work out the dates given week numbers
 var w2date = function (year, wn, dayNb) {
