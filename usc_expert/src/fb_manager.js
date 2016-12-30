@@ -27,6 +27,7 @@ FbManager.prototype.getAllEvents = function () {
             r.start_time = new Date(r.start_time);
         });
         self.events = results;
+        console.log("Found events : " + results.length);
         defer.resolve(results);
     });
     return defer.promise;

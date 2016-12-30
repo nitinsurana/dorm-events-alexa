@@ -3,60 +3,111 @@
 var http = require('http')
     , AlexaSkill = require('./AlexaSkill')
     , APP_ID = 'amzn1.ask.skill.789b89ef-790a-4002-b17b-5da0e3036248'
-    , ical = require('ical')
     , moment = require('moment')
     , request = require('request')
+    , firebase = require('firebase')
+    , q = require('q')
     , fbManager = require('./fb_manager');
 
 var dateOutOfRange = "Date is out of range please choose another date";
+var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
+var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events.";
+var descriptionMessage = "Here's the description ";
+var eventOutOfRange = "Event number is out of range please choose another event";
 
 var MyObject = function () {
     AlexaSkill.call(this, APP_ID);
 };
+// var storageEvents = [];
+var firebaseStorage = firebase.initializeApp({
+    apiKey: "AIzaSyAqJpER21buRYXs-CMF_Ed2RespCp-h8rY",
+    authDomain: "alexa-dorm-events.firebaseapp.com",
+    databaseURL: "https://alexa-dorm-events.firebaseio.com",
+    storageBucket: "alexa-dorm-events.appspot.com",
+    // messagingSenderId: "102471034173"
+});
+
 MyObject.prototype = Object.create(AlexaSkill.prototype);
 MyObject.prototype.constructor = MyObject;
 
-MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
-    var output = "Welcome to USC Expert, I am here to vastly narrow down events of your interest.";
+MyObject.prototype.getFBManager = function (session) {
+    var accessToken = session.user.accessToken;
+    return new fbManager(accessToken);
+};
+MyObject.prototype.setEvents = function (arr, session) {
+    // this.events = events;
+    // storageEvents = events;
+    console.log("Set Events accessToken : " + session);
+    var accessToken = session.user.accessToken;
+    console.log("Set Events accessToken : " + accessToken);
+    firebaseStorage.database().ref('events/' + accessToken).set({
+        events: arr
+    }, function (err) {
+        if (err) {
+            console.err("Error storing to firebase " + err);
+        }
+        firebaseStorage.delete();
+    });
+    console.log("Inside set events " + arr.length);
+};
+MyObject.prototype.getEvents = function (session) {
+    // return this.events || [];
+    var accessToken = session.user.accessToken;
+    var ref = firebaseStorage.database().ref('events/' + accessToken);
+    var defer = q.defer();
+    // ref.on('value', function (snapshot) {
+    //     defer.resolve(snapshot.val());
+    // });
+    ref.once('value').then(function (snapshot) {
+        defer.resolve(snapshot.val().events);
+        firebaseStorage.delete();
+    });
+    return defer.promise;
+};
 
-    response.ask(output);
+MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
+    response.ask(welcomeMessage);
 
     console.log("onLaunch requestId: " + launchRequest.requestId
         + ", sessionId: " + session.sessionId);
 };
 
 MyObject.prototype.intentHandlers = {
-    ColloquiumToday: function (intent, session, response) {
-        handleColloquiumToday(intent, session, response);
-    },
     HelpIntent: function (intent, session, response) {
-        // var speechOutput = 'You can ask me if there are colloquiums today or about events your friends are interested in.' +
-        //     'For example, you can say, Are there any colloquiums today.';
-        // response.ask(speechOutput);
         try {
             var accessToken = session.user.accessToken;
         } catch (e) {
             accessToken = e;
         }
-        var welcomeMessage = "Found your access token, welcome!  " + accessToken;
         if (accessToken) {
-            //     // FB.setAccessToken(accessToken);
-            //     console.log("HAVE ACCESS TOKEN : " + accessToken);
             response.ask(welcomeMessage);
-            //     // this.emit(':ask', welcomeMessage, welcomeMessage);
         }
         else {
-            var noAccessToken = "Please link your facebook";
-            //     var tryLaterText = "Something went wrong, please try again later";
             response.ask(noAccessToken);
-            //     // this.emit(':tell', noAccessToken, tryLaterText);
         }
     },
+    upcomingIntent: function (intent, session, response) {
+        var self = this;
+        console.log('Searching for next upcoming ');
+        var fb = this.getFBManager(session);
+        var p = fb.getAllEvents();
+        p.then(function (arr) {
+            console.log("Setting events...");
+            var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
+            self.setEvents(events, session);
+            console.log(events);
+            if (events && events.length) {
+                response.ask("Total " + events.length + " events found. First one is " + events[0].name);
+            } else {
+                response.tell("Sorry, no events found");
+            }
+        });
+    },
     searchIntent: function (intent, session, response) {
+        var self = this;
         var slotValue = intent.slots.date.value;
         slotValue = getDateFromSlot(slotValue);
-        var accessToken = session.user.accessToken;
-        var fb = new fbManager(accessToken);
+        var fb = this.getFBManager(session);
 
         if (slotValue.error) {
             response.tell(slotValue.error);
@@ -65,9 +116,10 @@ MyObject.prototype.intentHandlers = {
             var p = fb.getAllEvents();
             p.then(function (arr) {
                 var events = fb.findEvents(slotValue.startDate, slotValue.endDate);
+                self.setEvents(events, session);
                 console.log(events);
                 if (events && events.length) {
-                    response.tell("Total " + events.length + " events found. First one is " + events[0].name);
+                    response.ask("Total " + events.length + " events found. First one is " + events[0].name);
                 } else {
                     response.tell("Sorry, no events found");
                 }
@@ -76,46 +128,29 @@ MyObject.prototype.intentHandlers = {
 
     },
     eventIntent: function (intent, session, response) {
-
-        var repromt = " Would you like to hear another event?";
+        var reprompt = " Would you like to hear another event?";
         var slotValue = intent.slots.number.value;
 
         // parse slot value
         var index = parseInt(slotValue) - 1;
+        var promise = this.getEvents(session);
+        promise.then(function (relevantEvents) {
+            console.log("Stored events : " + relevantEvents);
 
-        //     if (relevantEvents[index]) {
-        //
-        //         // use the slot value as an index to retrieve description from our relevant array
-        //         var output = descriptionMessage + removeTags(relevantEvents[index].description);
-        //
-        //         output += repromt;
-        //
-        //         this.emit(':askWithCard', output, repromt, relevantEvents[index].summary, output);
-        //     } else {
-        //         this.emit(':tell', eventOutOfRange);
-        //     }
+            if (relevantEvents[index]) {
+                // use the slot value as an index to retrieve description from our relevant array
+                var output = descriptionMessage + removeTags(relevantEvents[index].description);
+                output += reprompt;
+                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+            } else {
+                response.tell(eventOutOfRange);
+            }
+        });
     }
 };
 
 function removeTags(str) {
     return str && str.replace(/<(?:.|\n)*?>/gm, '');
-}
-
-function handleColloquiumToday(intent, session, response) {
-    var arr = [];
-    var numbers = ['one', 'two', 'three', 'four', 'five'];
-    events.forEach(function (e, i) {
-        if (arr.length <= 5) {
-            if (e.date === 'today') {
-                arr.push(numbers[i] + ' ' + e.title + ' by ' + e.presenter + ' at ' + e.time + ' in ' + e.locatio);
-            }
-        }
-    });
-    if (!arr.length) {
-        response.tell("There are no colloquiums today");
-    } else {
-        response.tell(arr.join('. '));
-    }
 }
 
 // Given an AMAZON.DATE slot value parse out to usable JavaScript Date object

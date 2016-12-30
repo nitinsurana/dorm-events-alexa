@@ -1,27 +1,7 @@
 {
   "intents": [
     {
-      "intent": "ColloquiumToday",
-      "slots": []
-    },
-    {
-      "intent": "InterestedColloquiumToday",
-      "slots": []
-    },
-    {
-      "intent": "InterestedEventsToday",
-      "slots": []
-    },
-    {
-      "intent": "EventsToday",
-      "slots": []
-    },
-    {
       "intent": "HelpIntent",
-      "slots": []
-    },
-    {
-      "intent": "MyUpcomingFacebookEventsIntent",
       "slots": []
     },
     {
@@ -56,6 +36,9 @@
           "type": "AMAZON.DATE"
         }
       ]
+    },
+    {
+      "intent": "upcomingIntent"
     },
     {
       "intent": "eventIntent",

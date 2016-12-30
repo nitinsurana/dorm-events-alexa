@@ -1,5 +1,6 @@
 HelpIntent help
 HelpIntent help me
+HelpIntent help me please
 HelpIntent what can I ask you
 HelpIntent get help
 HelpIntent to help
@@ -16,11 +17,12 @@ HelpIntent how can I use you
 HelpIntent what can you tell me
 HelpIntent how do i find an event
 
-ColloquiumToday are there any colloquiums today
-ColloquiumToday what are the colloquiums today
+upcomingIntent what is my upcoming event
+upcomingIntent what is my next upcoming event
+upcomingIntent what is my upcoming facebook event
+upcomingIntent what is upcoming
+upcomingIntent what is next upcoming
 
-searchIntent what is my upcoming event
-searchIntent what is my upcoming facebook event
 searchIntent get me stuff happening {date}
 searchIntent get me events for {date}
 searchIntent whats on {date}
