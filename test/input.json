@@ -1,0 +1,25 @@
+{
+  "session": {
+    "sessionId": "SessionId.a4b27127-79ec-4f4d-ae03-743161294b15",
+    "application": {
+      "applicationId": "amzn1.ask.skill.789b89ef-790a-4002-b17b-5da0e3036248"
+    },
+    "attributes": {},
+    "user": {
+      "userId": "amzn1.ask.account.AGU2Q3EIDCXKH6U6L6GB3WSTL6IBEM5FMXUHURZJBJFMYYMYAWF77R67MWLBQHEWIGSLRAQ4RKBCA4EQFFKMITOYDGUKH2OVZWLZVONXT2AT43REZ4LULLWNKFYDNVX6YVCT7MMVPX4DCE5HRBN425VJGWKM3ZUEBRXPMGQVWD4LXDZEOVCIDYKHSDIB7LH7HLUQ2RGUBYWBGNI",
+      "accessToken": "EAAJZAbxXrAugBAHFDJqiB6NducoAPUNNflV8l51n2Gcg8oYrp0bJPC93rwMXLTOz0sOyqcQXXkynSLcdq1W0H8NjgfducvRs96EZAp1xv4rtVLCR3za9JonUBhUpZBx4Vve9qo60lN9bFwCX5STwtY4ZAMFqqdUZD"
+    },
+    "new": true
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "EdwRequestId.44fad929-6702-46c5-9c00-3eb7cf6e8a38",
+    "locale": "en-US",
+    "timestamp": "2016-12-29T20:55:45Z",
+    "intent": {
+      "name": "upcomingIntent",
+      "slots": {}
+    }
+  },
+  "version": "1.0"
+}
