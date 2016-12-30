@@ -14,15 +14,24 @@ HelpIntent what can you do
 HelpIntent what do you do
 HelpIntent how do I use you
 HelpIntent how can I use you
+HelpIntent how can I use it
 HelpIntent what can you tell me
 HelpIntent how do i find an event
 
+upcomingIntent the upcoming events
+upcomingIntent what are my upcoming events
 upcomingIntent what is my upcoming event
 upcomingIntent what is my next upcoming event
 upcomingIntent what is my upcoming facebook event
 upcomingIntent what is upcoming
 upcomingIntent what is next upcoming
+upcomingIntent what is next event
 upcomingIntent what is the next upcoming event
+upcomingIntent tell me about the upcoming events
+upcomingIntent tell me about upcoming events
+upcomingIntent tell me about the upcoming event
+upcomingIntent upcoming events
+upcomingIntent whats coming next
 
 searchIntent get me stuff happening {date}
 searchIntent get me events for {date}
@@ -36,10 +45,20 @@ searchIntent what events are happening on {date}
 
 eventIntent tell me about event {number}
 eventIntent whats event {number}
+eventIntent what is event {number}
 eventIntent number {number}
+eventIntent describe event {number}
+eventIntent describe {number}
 
 whereIntent where is event {number}
 whereIntent where is the event {number}
+whereIntent where is the event {number} happening
+whereIntent event {number} where
+whereIntent where event {number}
+whereIntent where is the event {number} held
 
 whenIntent when is event {number}
 whenIntent when is the event {number}
+whenIntent at what time event {number} is happening
+whenIntent tell me the time of event {number}
+whenIntent at what time event {number} starts

@@ -69,13 +69,14 @@ MyObject.prototype.intentHandlers = {
     searchIntent: function (intent, session, response) {
         var self = this;
         var slotValue = intent.slots.date.value;
+        console.log('searchIntent for ' + slotValue);
         slotValue = getDateFromSlot(slotValue);
         var fb = this.getFBManager(session);
 
         if (slotValue.error) {
             response.tell(slotValue.error);
         } else {
-            console.log('Searching for ' + intent.slots.date.value + "    " + slotValue.startDate + '     ' + slotValue.endDate);
+            console.log('Searching between ' + slotValue.startDate + '     ' + slotValue.endDate);
             var p = fb.getAllEvents();
             p.then(function (arr) {
                 var events = fb.findEvents(slotValue.startDate, slotValue.endDate);
@@ -180,7 +181,7 @@ function getDateFromSlot(rawDate) {
             var dates = getWeekData(res);
             eventDate["startDate"] = new Date(dates.startDate);
             eventDate["endDate"] = new Date(dates.endDate);
-        } else if (rawDate.match(/\d{4}-\d{2}/)) {
+        } else if (rawDate.match(/^\d{4}-\d{2}$/)) {
             var dates = getMonthData(res);
             eventDate["startDate"] = new Date(dates.startDate);
             eventDate["endDate"] = new Date(dates.endDate);
