@@ -48,6 +48,24 @@
           "type": "AMAZON.NUMBER"
         }
       ]
+    },
+    {
+      "intent": "whereIntent",
+      "slots": [
+        {
+          "name": "number",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
+    },
+    {
+      "intent": "whenIntent",
+      "slots": [
+        {
+          "name": "number",
+          "type": "AMAZON.NUMBER"
+        }
+      ]
     }
   ]
 }

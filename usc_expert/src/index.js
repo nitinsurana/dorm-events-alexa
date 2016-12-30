@@ -18,14 +18,15 @@ var eventOutOfRange = "Event number is out of range please choose another event"
 var MyObject = function () {
     AlexaSkill.call(this, APP_ID);
 };
-// var storageEvents = [];
+
 var firebaseStorage = firebase.initializeApp({
     apiKey: "AIzaSyAqJpER21buRYXs-CMF_Ed2RespCp-h8rY",
     authDomain: "alexa-dorm-events.firebaseapp.com",
     databaseURL: "https://alexa-dorm-events.firebaseio.com",
     storageBucket: "alexa-dorm-events.appspot.com",
-    // messagingSenderId: "102471034173"
+    messagingSenderId: "102471034173"
 });
+
 
 MyObject.prototype = Object.create(AlexaSkill.prototype);
 MyObject.prototype.constructor = MyObject;
@@ -35,9 +36,6 @@ MyObject.prototype.getFBManager = function (session) {
     return new fbManager(accessToken);
 };
 MyObject.prototype.setEvents = function (arr, session) {
-    // this.events = events;
-    // storageEvents = events;
-    console.log("Set Events accessToken : " + session);
     var accessToken = session.user.accessToken;
     console.log("Set Events accessToken : " + accessToken);
     firebaseStorage.database().ref('events/' + accessToken).set({
@@ -46,21 +44,29 @@ MyObject.prototype.setEvents = function (arr, session) {
         if (err) {
             console.err("Error storing to firebase " + err);
         }
-        firebaseStorage.delete();
+        // firebaseStorage.delete()
+        //     .then(function () {
+        //         console.log("App deleted successfully");
+        //     })
+        //     .catch(function (error) {
+        //         console.log("Error deleting app:", error);
+        //     });
     });
     console.log("Inside set events " + arr.length);
 };
 MyObject.prototype.getEvents = function (session) {
-    // return this.events || [];
     var accessToken = session.user.accessToken;
     var ref = firebaseStorage.database().ref('events/' + accessToken);
     var defer = q.defer();
-    // ref.on('value', function (snapshot) {
-    //     defer.resolve(snapshot.val());
-    // });
     ref.once('value').then(function (snapshot) {
         defer.resolve(snapshot.val().events);
-        firebaseStorage.delete();
+        // firebaseStorage.delete()
+        //     .then(function () {
+        //         console.log("App deleted successfully");
+        //     })
+        //     .catch(function (error) {
+        //         console.log("Error deleting app:", error);
+        //     });
     });
     return defer.promise;
 };
@@ -135,12 +141,54 @@ MyObject.prototype.intentHandlers = {
         var index = parseInt(slotValue) - 1;
         var promise = this.getEvents(session);
         promise.then(function (relevantEvents) {
-            console.log("Stored events : " + relevantEvents);
+            console.log("Stored events (eventInfo) : " + relevantEvents);
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
                 var output = descriptionMessage + removeTags(relevantEvents[index].description);
-                output += reprompt;
+                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+            } else {
+                response.tell(eventOutOfRange);
+            }
+        });
+    },
+    whereIntent: function (intent, session, response) {
+        var reprompt = " Would you like to hear another event?";
+        var slotValue = intent.slots.number.value;
+
+        // parse slot value
+        var index = parseInt(slotValue) - 1;
+        var promise = this.getEvents(session);
+        promise.then(function (relevantEvents) {
+            console.log("Stored events (where) : " + relevantEvents);
+
+            if (relevantEvents[index]) {
+                // use the slot value as an index to retrieve description from our relevant array
+                var output = "The event " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.location.street) + " " + removeTags(relevantEvents[index].place.location.city);
+                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+            } else {
+                response.tell(eventOutOfRange);
+            }
+        });
+    },
+    whenIntent: function (intent, session, response) {
+        var reprompt = " Would you like to hear another event?";
+        var slotValue = intent.slots.number.value;
+
+        // parse slot value
+        var index = parseInt(slotValue) - 1;
+        var promise = this.getEvents(session);
+        promise.then(function (relevantEvents) {
+            console.log("Stored events (when) : " + relevantEvents);
+
+            if (relevantEvents[index]) {
+                // use the slot value as an index to retrieve description from our relevant array
+                var when = " is probably the complete day."
+                if (relevantEvents[index].start_time) {   //not all events have a start time
+                    when = "is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a').replace(':', ' ');
+                }
+                console.log("The event is at " + when);
+                var output = "The event " + relevantEvents[index].name + when;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
                 response.tell(eventOutOfRange);

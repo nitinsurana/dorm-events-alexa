@@ -22,6 +22,7 @@ upcomingIntent what is my next upcoming event
 upcomingIntent what is my upcoming facebook event
 upcomingIntent what is upcoming
 upcomingIntent what is next upcoming
+upcomingIntent what is the next upcoming event
 
 searchIntent get me stuff happening {date}
 searchIntent get me events for {date}
@@ -36,3 +37,9 @@ searchIntent what events are happening on {date}
 eventIntent tell me about event {number}
 eventIntent whats event {number}
 eventIntent number {number}
+
+whereIntent where is event {number}
+whereIntent where is the event {number}
+
+whenIntent when is event {number}
+whenIntent when is the event {number}
