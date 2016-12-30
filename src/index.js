@@ -11,9 +11,39 @@ var http = require('http')
 
 var dateOutOfRange = "Date is out of range please choose another date";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
-var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events.";
+var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, location & timing.";
 var descriptionMessage = "Here's the description ";
 var eventOutOfRange = "Event number is out of range please choose another event";
+var helpPrimaryMessage = "What would you like to know about " +
+    "Number 1 Events happening " +
+    "Number 2 their description " +
+    "Number 3 location or " +
+    "Number 4 timing " +
+    "You can also say, stop, if you're done. " +
+    "So, how can I help ? ";
+var repeatMessage = "Would you like me to repeat ?";
+var helpHappeningMessage = "Here are some things you can ask : " +
+    "what are the upcoming events " +
+    "whats happening today " +
+    "whats happening next week " +
+    "whats happening this weekend. " +
+    repeatMessage;
+var helpDescribeMessage = "Here are some things you can ask : " +
+    " Describe event 2 " +
+    "What is event 2 " +
+    "what is event 2 about. " +
+    repeatMessage;
+var helpPlaceMessage = "Here are some things you can ask : " +
+    "where is the event 2 happening " +
+    "where is the event 2 being held. " +
+    repeatMessage;
+var helpTimeMessage = "Here are some things you can ask : " +
+    "when is the event2 " +
+    "at what time event2 is happening " +
+    "tell me the time of event 2 " +
+    "at what time event 2 starts " +
+    repeatMessage;
+
 
 var MyObject = function () {
     AlexaSkill.call(this, APP_ID);
@@ -36,20 +66,49 @@ MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, re
 };
 
 MyObject.prototype.intentHandlers = {
-    HelpIntent: function (intent, session, response) {
-        try {
-            var accessToken = session.user.accessToken;
-        } catch (e) {
-            accessToken = e;
-        }
-        if (accessToken) {
-            response.ask(welcomeMessage);
-        }
-        else {
-            response.ask(noAccessToken);
+    "AMAZON.RepeatIntent": function (intent, session, response) {
+        if (session.attributes.repeat) {
+            var repeat = session.attributes.repeat;
+            delete session.attributes.repeat;
+            this.intentHandlers[repeat].call(this, intent, session, response);
         }
     },
-    upcomingIntent: function (intent, session, response) {
+    "AMAZON.NoIntent": function (intent, session, response) {
+        session.attributes = {};        //Remove all session attributes
+    },
+    "AMAZON.StopIntent": function (intent, session, response) {
+        this.intentHandlers["AMAZON.NoIntent"].call(this, intent, session, response);
+    },
+    "AMAZON.YesIntent": function (intent, session, response) {
+        this.intentHandlers["AMAZON.RepeatIntent"].call(this, intent, session, response);
+    },
+
+
+    "AMAZON.HelpIntent": function (intent, session, response) {
+        return this.intentHandlers.helpIntent(intent, session, response);
+    },
+    "helpIntent": function (intent, session, response) {
+        response.ask(helpPrimaryMessage);
+    },
+    "helpIntentHappening": function (intent, session, response) {
+        session.attributes.repeat = "helpIntentHappening";
+        response.ask(helpHappeningMessage);
+    },
+    "helpIntentDescribe": function (intent, session, response) {
+        session.attributes.repeat = "helpIntentDescribe";
+        response.ask(helpDescribeMessage);
+    },
+    "helpIntentPlace": function (intent, session, response) {
+        session.attributes.repeat = "helpIntentPlace";
+        response.ask(helpPlaceMessage);
+    },
+    "helpIntentTime": function (intent, session, response) {
+        session.attributes.repeat = "helpIntentTime";
+        response.ask(helpTimeMessage);
+    },
+
+
+    "upcomingIntent": function (intent, session, response) {
         var self = this;
         console.log('Searching for next upcoming ');
         var fb = this.getFBManager(session);
@@ -66,7 +125,7 @@ MyObject.prototype.intentHandlers = {
             }
         });
     },
-    searchIntent: function (intent, session, response) {
+    "searchIntent": function (intent, session, response) {
         var self = this;
         var slotValue = intent.slots.date.value;
         console.log('searchIntent for ' + slotValue);
@@ -91,7 +150,7 @@ MyObject.prototype.intentHandlers = {
         }
 
     },
-    eventIntent: function (intent, session, response) {
+    "eventIntent": function (intent, session, response) {
         var reprompt = " Would you like to hear another event?";
         var slotValue = intent.slots.number.value;
 
@@ -110,7 +169,7 @@ MyObject.prototype.intentHandlers = {
             }
         });
     },
-    whereIntent: function (intent, session, response) {
+    "whereIntent": function (intent, session, response) {
         var reprompt = " Would you like to hear another event?";
         var slotValue = intent.slots.number.value;
 
@@ -129,7 +188,7 @@ MyObject.prototype.intentHandlers = {
             }
         });
     },
-    whenIntent: function (intent, session, response) {
+    "whenIntent": function (intent, session, response) {
         var reprompt = " Would you like to hear another event?";
         var slotValue = intent.slots.number.value;
 

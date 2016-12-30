@@ -1,11 +1,31 @@
 {
   "intents": [
     {
-      "intent": "HelpIntent",
+      "intent": "helpIntent",
+      "slots": []
+    },
+    {
+      "intent": "helpIntentHappening",
+      "slots": []
+    },
+    {
+      "intent": "helpIntentDescribe",
+      "slots": []
+    },
+    {
+      "intent": "helpIntentPlace",
+      "slots": []
+    },
+    {
+      "intent": "helpIntentTime",
       "slots": []
     },
     {
       "intent": "AMAZON.HelpIntent",
+      "slots": []
+    },
+    {
+      "intent": "helpDetailIntent",
       "slots": []
     },
     {

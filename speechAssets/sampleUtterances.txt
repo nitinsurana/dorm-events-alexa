@@ -1,22 +1,39 @@
-HelpIntent help
-HelpIntent help me
-HelpIntent help me please
-HelpIntent what can I ask you
-HelpIntent get help
-HelpIntent to help
-HelpIntent to help me
-HelpIntent what commands can I ask
-HelpIntent what commands can I say
-HelpIntent what can I do
-HelpIntent what can I use this for
-HelpIntent what questions can I ask
-HelpIntent what can you do
-HelpIntent what do you do
-HelpIntent how do I use you
-HelpIntent how can I use you
-HelpIntent how can I use it
-HelpIntent what can you tell me
-HelpIntent how do i find an event
+helpIntent help
+helpIntent help me
+helpIntent help me please
+helpIntent what can I ask you
+helpIntent get help
+helpIntent to help
+helpIntent to help me
+helpIntent what commands can I ask
+helpIntent what commands can I say
+helpIntent what can I do
+helpIntent what can I use this for
+helpIntent what questions can I ask
+helpIntent what can you do
+helpIntent what do you do
+helpIntent how do I use you
+helpIntent how can I use you
+helpIntent how can I use it
+helpIntent what can you tell me
+helpIntent how do i find an event
+
+helpIntentHappening events happening
+helpIntentHappening events occurrence
+helpIntentHappening happening
+
+helpIntentDescribe events description
+helpIntentDescribe description
+
+helpIntentPlace place
+helpIntentPlace location
+helpIntentPlace events location
+helpIntentPlace events place
+
+helpIntentTime events time
+helpIntentTime events timing
+helpIntentTime time
+helpIntentTime timing
 
 upcomingIntent the upcoming events
 upcomingIntent what are my upcoming events
@@ -49,13 +66,18 @@ eventIntent what is event {number}
 eventIntent number {number}
 eventIntent describe event {number}
 eventIntent describe {number}
+eventIntent what is event {number} about
+eventIntent event {number}
 
 whereIntent where is event {number}
 whereIntent where is the event {number}
 whereIntent where is the event {number} happening
+whereIntent where is event {number} happening
 whereIntent event {number} where
 whereIntent where event {number}
 whereIntent where is the event {number} held
+whereIntent where is the event {number} being held
+whereIntent where will the event {number} being held
 
 whenIntent when is event {number}
 whenIntent when is the event {number}
