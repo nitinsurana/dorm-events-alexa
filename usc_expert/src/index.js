@@ -6,7 +6,7 @@ var http = require('http')
     , moment = require('moment')
     , request = require('request')
     , q = require('q')
-    , myDatabase = new (require('./mydatabase'))('firebase')
+    , myDatabase = new (require('./mydatabase'))('dynamoDB')
     , fbManager = require('./fb_manager');
 
 var dateOutOfRange = "Date is out of range please choose another date";
