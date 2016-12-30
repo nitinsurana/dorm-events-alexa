@@ -49,6 +49,7 @@ upcomingIntent tell me about upcoming events
 upcomingIntent tell me about the upcoming event
 upcomingIntent upcoming events
 upcomingIntent whats coming next
+upcomingIntent whats upcoming
 
 searchIntent get me stuff happening {date}
 searchIntent get me events for {date}
@@ -84,3 +85,8 @@ whenIntent when is the event {number}
 whenIntent at what time event {number} is happening
 whenIntent tell me the time of event {number}
 whenIntent at what time event {number} starts
+
+nextEventIntent next event
+nextEventIntent what is the next event
+nextEventIntent whats next event
+

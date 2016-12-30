@@ -43,6 +43,7 @@ var helpTimeMessage = "Here are some things you can ask : " +
     "tell me the time of event 2 " +
     "at what time event 2 starts " +
     repeatMessage;
+var hearMore = ". Would you like to hear more ? ";
 
 
 var MyObject = function () {
@@ -67,7 +68,7 @@ MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, re
 
 MyObject.prototype.intentHandlers = {
     "AMAZON.RepeatIntent": function (intent, session, response) {
-        if (session.attributes.repeat) {
+        if (session.attributes.speak === 'help' && session.attributes.repeat) {
             var repeat = session.attributes.repeat;
             delete session.attributes.repeat;
             this.intentHandlers[repeat].call(this, intent, session, response);
@@ -80,7 +81,11 @@ MyObject.prototype.intentHandlers = {
         this.intentHandlers["AMAZON.NoIntent"].call(this, intent, session, response);
     },
     "AMAZON.YesIntent": function (intent, session, response) {
-        this.intentHandlers["AMAZON.RepeatIntent"].call(this, intent, session, response);
+        if (session.attributes.speak === "event" && session.attributes.lastEventIndex >= 0) {
+            this.intentHandlers["nextEventIntent"].call(this, intent, session, response);
+        } else if (session.attributes.speak === 'help') {
+            this.intentHandlers["AMAZON.RepeatIntent"].call(this, intent, session, response);
+        }
     },
 
 
@@ -88,21 +93,26 @@ MyObject.prototype.intentHandlers = {
         return this.intentHandlers.helpIntent(intent, session, response);
     },
     "helpIntent": function (intent, session, response) {
+        session.attributes.speak = "help";
         response.ask(helpPrimaryMessage);
     },
     "helpIntentHappening": function (intent, session, response) {
+        session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentHappening";
         response.ask(helpHappeningMessage);
     },
     "helpIntentDescribe": function (intent, session, response) {
+        session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentDescribe";
         response.ask(helpDescribeMessage);
     },
     "helpIntentPlace": function (intent, session, response) {
+        session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentPlace";
         response.ask(helpPlaceMessage);
     },
     "helpIntentTime": function (intent, session, response) {
+        session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentTime";
         response.ask(helpTimeMessage);
     },
@@ -119,7 +129,10 @@ MyObject.prototype.intentHandlers = {
             myDatabase.setEvents(events, session.user.accessToken);
             console.log(events);
             if (events && events.length) {
-                response.ask("Total " + events.length + " events found. First one is " + events[0].name);
+                var msg = "Total " + events.length + " events found. Number one is " + events[0].name + hearMore;
+                session.attributes.speak = "event";
+                session.attributes.lastEventIndex = 0;
+                response.ask(msg);
             } else {
                 response.tell("Sorry, no events found");
             }
@@ -142,16 +155,42 @@ MyObject.prototype.intentHandlers = {
                 myDatabase.setEvents(events, session.user.accessToken);
                 console.log(events);
                 if (events && events.length) {
-                    response.ask("Total " + events.length + " events found. First one is " + events[0].name);
+                    var msg = "Total " + events.length + " events found. Number one is " + events[0].name + hearMore;
+                    session.attributes.speak = "event";
+                    session.attributes.lastEventIndex = 0;
+                    response.ask(msg);
                 } else {
                     response.tell("Sorry, no events found");
                 }
             });
         }
+    },
+    "nextEventIntent": function (intent, session, response) {
+        var reprompt = " Would you like to hear another event? ";
+        if (typeof session.attributes.lastEventIndex != 'undefined') {
+            var index = session.attributes.lastEventIndex + 1;
+            var promise = myDatabase.getEvents(session.user.accessToken);
+            promise.then(function (relevantEvents) {
+                console.log("Next event (eventInfo) : " + relevantEvents.length);
 
+                if (relevantEvents[index]) {
+                    // use the slot value as an index to retrieve description from our relevant array
+                    var output = "Number " + (index + 1) + " event is " + removeTags(relevantEvents[index].name) + hearMore;
+                    session.attributes.speak = "event";
+                    session.attributes.lastEventIndex = index;
+                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                } else {
+                    session.attributes.speak = undefined;
+                    session.attributes.lastEventIndex = -1;
+                    response.tell(eventOutOfRange);
+                }
+            });
+        } else {
+            response.tell("There is no next event. You can use the phrase \"tell me about event three\" to know more about that event or ask for upcoming events.")
+        }
     },
     "eventIntent": function (intent, session, response) {
-        var reprompt = " Would you like to hear another event?";
+        var reprompt = " Would you like to hear another event? ";
         var slotValue = intent.slots.number.value;
 
         // parse slot value
@@ -163,8 +202,12 @@ MyObject.prototype.intentHandlers = {
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
                 var output = descriptionMessage + removeTags(relevantEvents[index].description);
+                session.attributes.speak = "event";
+                session.attributes.lastEventIndex = index;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
+                session.attributes.speak = undefined;
+                session.attributes.lastEventIndex = -1;
                 response.tell(eventOutOfRange);
             }
         });
@@ -184,6 +227,8 @@ MyObject.prototype.intentHandlers = {
                 var output = "The event " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.location.street) + " " + removeTags(relevantEvents[index].place.location.city);
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
+                session.attributes.speak = undefined;
+                session.attributes.lastEventIndex = -1;
                 response.tell(eventOutOfRange);
             }
         });
@@ -208,6 +253,8 @@ MyObject.prototype.intentHandlers = {
                 var output = "The event " + relevantEvents[index].name + when;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
+                session.attributes.speak = undefined;
+                session.attributes.lastEventIndex = -1;
                 response.tell(eventOutOfRange);
             }
         });

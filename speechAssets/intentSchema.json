@@ -29,6 +29,10 @@
       "slots": []
     },
     {
+      "intent": "nextEventIntent",
+      "slots": []
+    },
+    {
       "intent": "AMAZON.StopIntent",
       "slots": []
     },
