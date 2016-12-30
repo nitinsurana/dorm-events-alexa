@@ -117,7 +117,7 @@ MyObject.prototype.intentHandlers = {
         var index = parseInt(slotValue) - 1;
         var promise = myDatabase.getEvents(session.user.accessToken);
         promise.then(function (relevantEvents) {
-            console.log("Stored events (where) : " + relevantEvents);
+            console.log("Stored events (where) : " + relevantEvents.length);
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array

@@ -32,7 +32,7 @@ MyDatabase.prototype._setEventsDynamoDB = function (arr, accessToken) {
         }
     }, function (err, data) {
         if (err) {
-            console.error("Unable to add movie", ". Error JSON:", JSON.stringify(err, null, 2));
+            console.error("Unable to add item", ". Error JSON:", JSON.stringify(err, null, 2));
         } else {
             console.log("PutItem succeeded:");
         }
@@ -50,8 +50,9 @@ MyDatabase.prototype._getEventsDynamoDB = function (accessToken) {
     }, function (err, data) {
         if (err) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+            defer.resolve([]);
         } else {
-            defer.resolve(data.Item.events);
+            defer.resolve((data.Item && data.Item.events) || []);
         }
     });
     return defer.promise;
@@ -74,7 +75,7 @@ MyDatabase.prototype._getEventsFirebase = function (accessToken) {
     var ref = this.firebaseStorage.database().ref('events/' + accessToken);
     var defer = q.defer();
     ref.once('value').then(function (snapshot) {
-        defer.resolve(snapshot.val().events);
+        defer.resolve(snapshot.val().events || []);
     });
     return defer.promise;
 };
