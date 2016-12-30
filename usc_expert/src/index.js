@@ -5,8 +5,8 @@ var http = require('http')
     , APP_ID = 'amzn1.ask.skill.789b89ef-790a-4002-b17b-5da0e3036248'
     , moment = require('moment')
     , request = require('request')
-    , firebase = require('firebase')
     , q = require('q')
+    , myDatabase = new (require('./mydatabase'))('firebase')
     , fbManager = require('./fb_manager');
 
 var dateOutOfRange = "Date is out of range please choose another date";
@@ -19,14 +19,6 @@ var MyObject = function () {
     AlexaSkill.call(this, APP_ID);
 };
 
-var firebaseStorage = firebase.initializeApp({
-    apiKey: "AIzaSyAqJpER21buRYXs-CMF_Ed2RespCp-h8rY",
-    authDomain: "alexa-dorm-events.firebaseapp.com",
-    databaseURL: "https://alexa-dorm-events.firebaseio.com",
-    storageBucket: "alexa-dorm-events.appspot.com",
-    messagingSenderId: "102471034173"
-});
-
 
 MyObject.prototype = Object.create(AlexaSkill.prototype);
 MyObject.prototype.constructor = MyObject;
@@ -34,41 +26,6 @@ MyObject.prototype.constructor = MyObject;
 MyObject.prototype.getFBManager = function (session) {
     var accessToken = session.user.accessToken;
     return new fbManager(accessToken);
-};
-MyObject.prototype.setEvents = function (arr, session) {
-    var accessToken = session.user.accessToken;
-    console.log("Set Events accessToken : " + accessToken);
-    firebaseStorage.database().ref('events/' + accessToken).set({
-        events: arr
-    }, function (err) {
-        if (err) {
-            console.err("Error storing to firebase " + err);
-        }
-        // firebaseStorage.delete()
-        //     .then(function () {
-        //         console.log("App deleted successfully");
-        //     })
-        //     .catch(function (error) {
-        //         console.log("Error deleting app:", error);
-        //     });
-    });
-    console.log("Inside set events " + arr.length);
-};
-MyObject.prototype.getEvents = function (session) {
-    var accessToken = session.user.accessToken;
-    var ref = firebaseStorage.database().ref('events/' + accessToken);
-    var defer = q.defer();
-    ref.once('value').then(function (snapshot) {
-        defer.resolve(snapshot.val().events);
-        // firebaseStorage.delete()
-        //     .then(function () {
-        //         console.log("App deleted successfully");
-        //     })
-        //     .catch(function (error) {
-        //         console.log("Error deleting app:", error);
-        //     });
-    });
-    return defer.promise;
 };
 
 MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
@@ -100,7 +57,7 @@ MyObject.prototype.intentHandlers = {
         p.then(function (arr) {
             console.log("Setting events...");
             var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
-            self.setEvents(events, session);
+            myDatabase.setEvents(events, session.user.accessToken);
             console.log(events);
             if (events && events.length) {
                 response.ask("Total " + events.length + " events found. First one is " + events[0].name);
@@ -122,7 +79,7 @@ MyObject.prototype.intentHandlers = {
             var p = fb.getAllEvents();
             p.then(function (arr) {
                 var events = fb.findEvents(slotValue.startDate, slotValue.endDate);
-                self.setEvents(events, session);
+                myDatabase.setEvents(events, session.user.accessToken);
                 console.log(events);
                 if (events && events.length) {
                     response.ask("Total " + events.length + " events found. First one is " + events[0].name);
@@ -139,7 +96,7 @@ MyObject.prototype.intentHandlers = {
 
         // parse slot value
         var index = parseInt(slotValue) - 1;
-        var promise = this.getEvents(session);
+        var promise = myDatabase.getEvents(session.user.accessToken);
         promise.then(function (relevantEvents) {
             console.log("Stored events (eventInfo) : " + relevantEvents);
 
@@ -158,7 +115,7 @@ MyObject.prototype.intentHandlers = {
 
         // parse slot value
         var index = parseInt(slotValue) - 1;
-        var promise = this.getEvents(session);
+        var promise = myDatabase.getEvents(session.user.accessToken);
         promise.then(function (relevantEvents) {
             console.log("Stored events (where) : " + relevantEvents);
 
@@ -177,7 +134,7 @@ MyObject.prototype.intentHandlers = {
 
         // parse slot value
         var index = parseInt(slotValue) - 1;
-        var promise = this.getEvents(session);
+        var promise = myDatabase.getEvents(session.user.accessToken);
         promise.then(function (relevantEvents) {
             console.log("Stored events (when) : " + relevantEvents);
 
