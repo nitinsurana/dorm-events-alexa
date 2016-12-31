@@ -247,7 +247,7 @@ MyObject.prototype.intentHandlers = {
                 var when = " is probably the complete day."
                 console.log(relevantEvents[index].start_time);
                 if (relevantEvents[index].start_time) {   //not all events have a start time
-                    when = "is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a').replace(':', ' ');
+                    when = "is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
                 }
                 console.log("The event is at " + when);
                 var output = "The event, " + relevantEvents[index].name + when;

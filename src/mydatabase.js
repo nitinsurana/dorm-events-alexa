@@ -23,9 +23,9 @@ function MyDatabase(instanceType) {
 }
 
 MyDatabase.prototype._setEventsDynamoDB = function (arr, accessToken) {
-    console.log("Set Events (dynamoDB) accessToken : " + accessToken);
+    console.log("Set Events (dynamoDB) accessToken : " + accessToken + "  " + arr.length);
     arr.forEach(function (o) {
-        if (o.start_time) {
+        if (o.start_time && typeof o.start_time === 'object') {
             o.start_time = o.start_time.toISOString();
         }
     });

@@ -1,6 +1,7 @@
 var https = require('https');
 var q = require('q');
 var request = require('request-promise');
+var moment = require('moment');
 
 function FbManager(accessToken) {
     this.accessToken = accessToken;
@@ -35,9 +36,13 @@ FbManager.prototype.getAllEvents = function () {
 
 FbManager.prototype.findEvents = function (startDate, endDate) {
     var events = this.events.filter(function (r) {
-        var st = r.start_time;
-        if (st.getYear() >= startDate.getYear() && st.getMonth() >= startDate.getMonth() && st.getDate() >= startDate.getDate()
-            && st.getYear() <= endDate.getYear() && st.getMonth() <= endDate.getMonth() && st.getDate() <= endDate.getDate()) {
+        // var st = r.start_time;
+        // if (st.getYear() >= startDate.getYear() && st.getMonth() >= startDate.getMonth() && st.getDate() >= startDate.getDate()
+        //     && st.getYear() <= endDate.getYear() && st.getMonth() <= endDate.getMonth() && st.getDate() <= endDate.getDate()) {
+        // var t = r.start_time.getTime();
+        // if (t >= startDate.getTime() && t <= endDate.getTime()) {
+        var b = moment(r.start_time).isBetween(startDate, endDate, 'days', 'days');
+        if (b) {
             return true;
         }
         return false;
