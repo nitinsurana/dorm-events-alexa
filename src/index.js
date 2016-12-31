@@ -11,36 +11,36 @@ var http = require('http')
 
 var dateOutOfRange = "Date is out of range please choose another date";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
-var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, location & timing.";
+var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming event's, their location and timing.";
 var eventOutOfRange = "Event number is out of range please choose another event";
-var helpPrimaryMessage = "What would you like to know about " +
-    "Number 1 Events happening " +
-    "Number 2 their description " +
-    "Number 3 location or " +
-    "Number 4 timing " +
+var repeatMessage = ". Would you like me to repeat ?";
+var helpPrimaryMessage = "What <break time=\"1ms\"/> would you like to know about <break time=\"2ms\"/>" +
+    "Number one Events happening <break time=\"1ms\"/>" +
+    "Number two their description <break time=\"1ms\"/>" +
+    "Number three location <break time=\"1ms\"/>" +
+    "Number four timing <break time=\"1ms\"/>" +
     "You can also say, stop, if you're done. " +
-    "So, how can I help ? ";
-var repeatMessage = "Would you like me to repeat ?";
+    "So, how can I help ?";
 var helpHappeningMessage = "Here are some things you can ask : " +
-    "what are the upcoming events " +
-    "whats happening today " +
-    "whats happening next week " +
+    "what are the upcoming events <break time=\"1ms\"/>" +
+    "whats happening today <break time=\"1ms\"/>" +
+    "whats happening next week <break time=\"1ms\"/>" +
     "whats happening this weekend. " +
     repeatMessage;
 var helpDescribeMessage = "Here are some things you can ask : " +
-    " Describe event 2 " +
-    "What is event 2 " +
-    "what is event 2 about. " +
+    " Describe event two <break time=\"1ms\"/>" +
+    "What is event two <break time=\"1ms\"/>" +
+    "what is event two about. " +
     repeatMessage;
 var helpPlaceMessage = "Here are some things you can ask : " +
-    "where is the event 2 happening " +
-    "where is the event 2 being held. " +
+    "where is the event two happening <break time=\"1ms\"/>" +
+    "where is the event two being held. " +
     repeatMessage;
 var helpTimeMessage = "Here are some things you can ask : " +
-    "when is the event2 " +
-    "at what time event2 is happening " +
-    "tell me the time of event 2 " +
-    "at what time event 2 starts " +
+    "when is the event two <break time=\"1ms\"/>" +
+    "at what time event two is happening <break time=\"1ms\"/>" +
+    "tell me the time of event two <break time=\"1ms\"/>" +
+    "at what time event two starts " +
     repeatMessage;
 var hearMore = ". Would you like to hear more ? ";
 
@@ -93,27 +93,47 @@ MyObject.prototype.intentHandlers = {
     },
     "helpIntent": function (intent, session, response) {
         session.attributes.speak = "help";
-        response.ask(helpPrimaryMessage);
+        var speechOutput = {
+            speech: "<speak>" + helpPrimaryMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
     },
     "helpIntentHappening": function (intent, session, response) {
         session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentHappening";
-        response.ask(helpHappeningMessage);
+        var speechOutput = {
+            speech: "<speak>" + helpHappeningMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
     },
     "helpIntentDescribe": function (intent, session, response) {
         session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentDescribe";
-        response.ask(helpDescribeMessage);
+        var speechOutput = {
+            speech: "<speak>" + helpDescribeMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
     },
     "helpIntentPlace": function (intent, session, response) {
         session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentPlace";
-        response.ask(helpPlaceMessage);
+        var speechOutput = {
+            speech: "<speak>" + helpPlaceMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
     },
     "helpIntentTime": function (intent, session, response) {
         session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentTime";
-        response.ask(helpTimeMessage);
+        var speechOutput = {
+            speech: "<speak>" + helpTimeMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
     },
 
 
@@ -128,7 +148,7 @@ MyObject.prototype.intentHandlers = {
             myDatabase.setEvents(events, session.user.accessToken);
             console.log(events);
             if (events && events.length) {
-                var msg = "Total " + events.length + " events found. Number one is " + events[0].name + hearMore;
+                var msg = "Total " + events.length + " events found. Number one is, " + events[0].name + hearMore;
                 session.attributes.speak = "event";
                 session.attributes.lastEventIndex = 0;
                 response.ask(msg);
@@ -154,7 +174,7 @@ MyObject.prototype.intentHandlers = {
                 myDatabase.setEvents(events, session.user.accessToken);
                 console.log(events);
                 if (events && events.length) {
-                    var msg = "Total " + events.length + " events found. Number one is " + events[0].name + hearMore;
+                    var msg = "Total " + events.length + " events found. Number one is, " + events[0].name + hearMore;
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = 0;
                     response.ask(msg);
@@ -174,7 +194,7 @@ MyObject.prototype.intentHandlers = {
 
                 if (relevantEvents[index]) {
                     // use the slot value as an index to retrieve description from our relevant array
-                    var output = "Number " + (index + 1) + " event is " + removeTags(relevantEvents[index].name) + hearMore;
+                    var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name) + hearMore;
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = index;
                     response.askWithCard(output, reprompt, relevantEvents[index].summary, output);

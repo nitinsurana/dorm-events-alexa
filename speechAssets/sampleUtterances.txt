@@ -26,16 +26,20 @@ helpIntentDescribe events description
 helpIntentDescribe description
 
 helpIntentPlace place
+helpIntentPlace help place
 helpIntentPlace location
+helpIntentPlace help location
 helpIntentPlace events location
 helpIntentPlace events place
 
 helpIntentTime events time
 helpIntentTime events timing
+helpIntentTime help time
 helpIntentTime time
 helpIntentTime timing
 
 upcomingIntent the upcoming events
+upcomingIntent what are my next upcoming events
 upcomingIntent what are my upcoming events
 upcomingIntent what is my upcoming event
 upcomingIntent what is my next upcoming event
@@ -62,6 +66,7 @@ searchIntent what events are happening {date}
 searchIntent what events are happening on {date}
 
 eventIntent tell me about event {number}
+eventIntent tell me more about number {number}
 eventIntent whats event {number}
 eventIntent what is event {number}
 eventIntent number {number}
