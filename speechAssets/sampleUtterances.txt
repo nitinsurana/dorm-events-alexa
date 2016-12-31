@@ -84,12 +84,16 @@ whereIntent where event {number}
 whereIntent where is the event {number} held
 whereIntent where is the event {number} being held
 whereIntent where will the event {number} being held
+whereIntent where is it
+whereIntent where is the event
 
 whenIntent when is event {number}
 whenIntent when is the event {number}
 whenIntent at what time event {number} is happening
 whenIntent tell me the time of event {number}
 whenIntent at what time event {number} starts
+whenIntent when is it
+whenIntent when is the event
 
 nextEventIntent next event
 nextEventIntent what is the next event

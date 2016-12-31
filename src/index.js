@@ -252,12 +252,24 @@ MyObject.prototype.intentHandlers = {
         // parse slot value
         var index = parseInt(slotValue) - 1;
         var promise = myDatabase.getEvents(session.user.accessToken);
+        var lastIndex = session.attributes.lastEventIndex;
         promise.then(function (relevantEvents) {
-            console.log("Stored events (where) : " + relevantEvents.length);
+            console.log("Stored events (where) : " + relevantEvents.length + "   " + index);
 
+            if (isNaN(index)) {
+                if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                    index = lastIndex;
+                }
+            }
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
-                var output = "The event, " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.location.street) + " " + removeTags(relevantEvents[index].place.location.city);
+                var output = "The event, " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.name) + " , ";
+                if (relevantEvents[index].place.location && relevantEvents[index].place.location.street) {
+                    output += removeTags(relevantEvents[index].place.location.street) + ", "
+                }
+                if (relevantEvents[index].place.location && relevantEvents[index].place.location.city) {
+                    output += removeTags(relevantEvents[index].place.location.city) + ", "
+                }
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
                 session.attributes.speak = undefined;
@@ -273,17 +285,23 @@ MyObject.prototype.intentHandlers = {
         // parse slot value
         var index = parseInt(slotValue) - 1;
         var promise = myDatabase.getEvents(session.user.accessToken);
+        var lastIndex = session.attributes.lastEventIndex;
         promise.then(function (relevantEvents) {
-            console.log("Stored events (when) : " + relevantEvents.length);
+            console.log("Stored events (when) : " + relevantEvents.length + "     " + index);
+
+            if (isNaN(index)) {
+                if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                    index = lastIndex;
+                }
+            }
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
-                var when = " is probably the complete day."
+                var when = " is probably the complete day.";
                 console.log(relevantEvents[index].start_time);
                 if (relevantEvents[index].start_time) {   //not all events have a start time
-                    when = "is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
+                    when = " is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
                 }
-                console.log("The event is at " + when);
                 var output = "The event, " + relevantEvents[index].name + when;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
