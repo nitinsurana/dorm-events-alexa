@@ -15,7 +15,7 @@
 // the role must have a trusted policy with
 // "lambda.amazonaws.com" and "arn:aws:iam::<YOUR ACCOUNT ID>:user/<YOUR USER>"
 
-var roleArn = 'arn:aws:iam::976467072181:service-role/user';
+var roleArn = 'arn:aws:iam::976467072181:role/lambda_dynamo';
 var region = 'us-east-1';
 /* DO NOT MAKE CHANGE BELOW THIS */
 var AWS = require('aws-sdk');
@@ -27,20 +27,18 @@ function context() {
         console.log(error);
         console.log(result);
         process.exit();
-    }
+    };
     context.succeed = function(result) {
         console.log('context.succeed');
         console.log(result);
         process.exit();
-    }
+    };
     context.fail = function(error) {
         console.log('context.fail');
         console.log(error);
         process.exit();
-    }
-
+    };
     return context;
-
 }
 
 AWS.config.region = region;

@@ -11,7 +11,7 @@ var http = require('http')
 
 var dateOutOfRange = "Date is out of range please choose another date";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
-var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming event's, their location and timing.";
+var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, <break time=\"1ms\"/> their location  <break time=\"1ms\"/> and timing.";
 var eventOutOfRange = "Event number is out of range please choose another event";
 var repeatMessage = ". Would you like me to repeat ?";
 var helpPrimaryMessage = "What <break time=\"1ms\"/> would you like to know about <break time=\"2ms\"/>" +
@@ -59,7 +59,11 @@ MyObject.prototype.getFBManager = function (session) {
 };
 
 MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
-    response.ask(welcomeMessage);
+    var speechOutput = {
+        speech: "<speak>" + welcomeMessage + "</speak>",
+        type: AlexaSkill.speechOutputType.SSML
+    };
+    response.ask(speechOutput);
 
     console.log("onLaunch requestId: " + launchRequest.requestId
         + ", sessionId: " + session.sessionId);
@@ -146,7 +150,6 @@ MyObject.prototype.intentHandlers = {
             console.log("Setting events...");
             var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
             myDatabase.setEvents(events, session.user.accessToken);
-            console.log(events);
             if (events && events.length) {
                 var msg = "Total " + events.length + " events found. Number one is, " + events[0].name + hearMore;
                 session.attributes.speak = "event";
