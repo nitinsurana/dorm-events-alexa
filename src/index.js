@@ -14,6 +14,7 @@ var noAccessToken = "Your facebook integration is broken, please disable and the
 var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, <break time=\"1ms\"/> their location  <break time=\"1ms\"/> and timing.";
 var eventOutOfRange = "Event number is out of range please choose another event";
 var repeatMessage = ". Would you like me to repeat ?";
+var shutdownMessage = "Ok see you again soon.";
 var helpPrimaryMessage = "What <break time=\"1ms\"/> would you like to know about <break time=\"2ms\"/>" +
     "Number one Events happening <break time=\"1ms\"/>" +
     "Number two their description <break time=\"1ms\"/>" +
@@ -42,7 +43,7 @@ var helpTimeMessage = "Here are some things you can ask : " +
     "tell me the time of event two <break time=\"1ms\"/>" +
     "at what time event two starts " +
     repeatMessage;
-var hearMore = ". Would you like to hear more ? ";
+var hearMore = ". Would you like to hear the next event ? ";
 
 
 var MyObject = function () {
@@ -79,6 +80,7 @@ MyObject.prototype.intentHandlers = {
     },
     "AMAZON.NoIntent": function (intent, session, response) {
         session.attributes = {};        //Remove all session attributes
+        response.tell(shutdownMessage);
     },
     "AMAZON.StopIntent": function (intent, session, response) {
         this.intentHandlers["AMAZON.NoIntent"].call(this, intent, session, response);
@@ -151,7 +153,10 @@ MyObject.prototype.intentHandlers = {
             var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
             myDatabase.setEvents(events, session.user.accessToken);
             if (events && events.length) {
-                var msg = "Total " + events.length + " events found. Number one is, " + events[0].name + hearMore;
+                var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
+                if (events.length > 1) {
+                    msg += hearMore;
+                }
                 session.attributes.speak = "event";
                 session.attributes.lastEventIndex = 0;
                 response.ask(msg);
@@ -177,7 +182,10 @@ MyObject.prototype.intentHandlers = {
                 myDatabase.setEvents(events, session.user.accessToken);
                 console.log(events);
                 if (events && events.length) {
-                    var msg = "Total " + events.length + " events found. Number one is, " + events[0].name + hearMore;
+                    var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
+                    if (events.length > 1) {
+                        msg += hearMore;
+                    }
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = 0;
                     response.ask(msg);
@@ -197,7 +205,10 @@ MyObject.prototype.intentHandlers = {
 
                 if (relevantEvents[index]) {
                     // use the slot value as an index to retrieve description from our relevant array
-                    var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name) + hearMore;
+                    var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name);
+                    if (index < relevantEvents.length - 1) {
+                        output += hearMore;
+                    }
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = index;
                     response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
