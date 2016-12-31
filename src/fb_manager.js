@@ -34,12 +34,17 @@ FbManager.prototype.getAllEvents = function () {
 };
 
 FbManager.prototype.findEvents = function (startDate, endDate) {
-    return this.events.filter(function (r) {
-        var t = r.start_time.getTime();
-        if (t >= startDate.getTime() && t <= endDate.getTime()) {
+    var events = this.events.filter(function (r) {
+        var st = r.start_time;
+        if (st.getYear() >= startDate.getYear() && st.getMonth() >= startDate.getMonth() && st.getDate() >= startDate.getDate()
+            && st.getYear() <= endDate.getYear() && st.getMonth() <= endDate.getMonth() && st.getDate() <= endDate.getDate()) {
             return true;
         }
         return false;
     });
+    events.sort(function (a, b) {
+        return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    });
+    return events;
 };
 module.exports = FbManager;

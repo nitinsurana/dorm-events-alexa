@@ -24,6 +24,11 @@ function MyDatabase(instanceType) {
 
 MyDatabase.prototype._setEventsDynamoDB = function (arr, accessToken) {
     console.log("Set Events (dynamoDB) accessToken : " + accessToken);
+    arr.forEach(function (o) {
+        if (o.start_time) {
+            o.start_time = o.start_time.toISOString();
+        }
+    });
     this.docClient.put({
         TableName: dynamoDBTableName,
         Item: {
@@ -52,7 +57,13 @@ MyDatabase.prototype._getEventsDynamoDB = function (accessToken) {
             console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
             defer.resolve([]);
         } else {
-            defer.resolve((data.Item && data.Item.events) || []);
+            var eventsArr = (data.Item && data.Item.events) || [];
+            eventsArr.forEach(function (o) {
+                if (o.start_time) {
+                    o.start_time = new Date(o.start_time);
+                }
+            });
+            defer.resolve(eventsArr);
         }
     });
     return defer.promise;

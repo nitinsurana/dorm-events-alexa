@@ -12,7 +12,6 @@ var http = require('http')
 var dateOutOfRange = "Date is out of range please choose another date";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
 var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, location & timing.";
-var descriptionMessage = "Here's the description ";
 var eventOutOfRange = "Event number is out of range please choose another event";
 var helpPrimaryMessage = "What would you like to know about " +
     "Number 1 Events happening " +
@@ -201,7 +200,7 @@ MyObject.prototype.intentHandlers = {
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
-                var output = descriptionMessage + removeTags(relevantEvents[index].description);
+                var output = "Event " + slotValue + ", " + removeTags(relevantEvents[index].name) + " is about " + removeTags(relevantEvents[index].description);
                 session.attributes.speak = "event";
                 session.attributes.lastEventIndex = index;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
@@ -224,7 +223,7 @@ MyObject.prototype.intentHandlers = {
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
-                var output = "The event " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.location.street) + " " + removeTags(relevantEvents[index].place.location.city);
+                var output = "The event, " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.location.street) + " " + removeTags(relevantEvents[index].place.location.city);
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
                 session.attributes.speak = undefined;
@@ -241,16 +240,17 @@ MyObject.prototype.intentHandlers = {
         var index = parseInt(slotValue) - 1;
         var promise = myDatabase.getEvents(session.user.accessToken);
         promise.then(function (relevantEvents) {
-            console.log("Stored events (when) : " + relevantEvents);
+            console.log("Stored events (when) : " + relevantEvents.length);
 
             if (relevantEvents[index]) {
                 // use the slot value as an index to retrieve description from our relevant array
                 var when = " is probably the complete day."
+                console.log(relevantEvents[index].start_time);
                 if (relevantEvents[index].start_time) {   //not all events have a start time
                     when = "is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a').replace(':', ' ');
                 }
                 console.log("The event is at " + when);
-                var output = "The event " + relevantEvents[index].name + when;
+                var output = "The event, " + relevantEvents[index].name + when;
                 response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
             } else {
                 session.attributes.speak = undefined;
@@ -277,9 +277,10 @@ function getDateFromSlot(rawDate) {
     var result;
     // create an empty object to use later
     var eventDate = {};
+    var monthRegex = new RegExp(/^\d{4}-\d{2}$/);
 
     // if could not parse data must be one of the other formats
-    if (isNaN(date) || rawDate.match(/\d{4}-\d{2}/)) {      //year & month only date
+    if (isNaN(date) || rawDate.match(monthRegex)) {      //year & month only date
         // to find out what type of date this is, we can split it and count how many parts we have see comments above.
         var res = rawDate.split("-");
         // if we have 2 bits that include a 'W' week number
@@ -287,7 +288,7 @@ function getDateFromSlot(rawDate) {
             var dates = getWeekData(res);
             eventDate["startDate"] = new Date(dates.startDate);
             eventDate["endDate"] = new Date(dates.endDate);
-        } else if (rawDate.match(/^\d{4}-\d{2}$/)) {
+        } else if (rawDate.match(monthRegex)) {
             var dates = getMonthData(res);
             eventDate["startDate"] = new Date(dates.startDate);
             eventDate["endDate"] = new Date(dates.endDate);
