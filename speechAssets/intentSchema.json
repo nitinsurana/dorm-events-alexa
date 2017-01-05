@@ -25,10 +25,6 @@
       "slots": []
     },
     {
-      "intent": "helpDetailIntent",
-      "slots": []
-    },
-    {
       "intent": "nextEventIntent",
       "slots": []
     },

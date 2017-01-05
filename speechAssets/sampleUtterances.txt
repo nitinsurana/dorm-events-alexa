@@ -54,6 +54,8 @@ upcomingIntent tell me about the upcoming event
 upcomingIntent upcoming events
 upcomingIntent whats coming next
 upcomingIntent whats upcoming
+upcomingIntent whats my next upcoming event
+upcomingIntent what are the upcoming events
 
 searchIntent get me stuff happening {date}
 searchIntent get me events for {date}

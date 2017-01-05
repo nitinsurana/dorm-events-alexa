@@ -17,7 +17,7 @@ function AlexaSkill(appId) {
 AlexaSkill.speechOutputType = {
     PLAIN_TEXT: 'PlainText',
     SSML: 'SSML'
-}
+};
 
 AlexaSkill.prototype.requestHandlers = {
     LaunchRequest: function (event, context, response) {
@@ -170,6 +170,14 @@ Response.prototype = (function () {
                 output: speechOutput,
                 cardTitle: cardTitle,
                 cardContent: cardContent,
+                shouldEndSession: true
+            }));
+        },
+        tellWithLinkAccountCard: function (speechOutput) {
+            this._context.succeed(buildSpeechletResponse({
+                session: this._session,
+                output: speechOutput,
+                // cardType: "LinkAccount",
                 shouldEndSession: true
             }));
         },

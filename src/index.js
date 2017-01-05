@@ -70,6 +70,31 @@ MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, re
         + ", sessionId: " + session.sessionId);
 };
 
+MyObject.prototype.hasToken = function (intent, session, response) {
+    var defer = q.defer();
+    var token = session.user.accessToken;
+    if (token) {
+        this.getFBManager(session).hasAppropriatePermissions().then(function () {
+            defer.resolve();
+        }).fail(function (err) {
+            console.log("Token present but permission expired or not enough permissions");
+            console.log(err);
+            if (err === 'not-enough-permissions') {
+                console.log("User does not have either the account linked or have not given appropriate permissions");
+                response.tellWithLinkAccountCard('Your linked Facebook account have not given enough permissions. Please use the Alexa App to disable and then re-enable the skill and this time make sure to give permissions.');
+                defer.reject();
+            } else {
+                response.tellWithLinkAccountCard('Your Facebook account is not linked. Please use the Alexa App to link the account and make sure to give event permissions.');
+                defer.reject();
+            }
+        });
+    } else {
+        response.tellWithLinkAccountCard('Your Facebook account is not linked. Please use the Alexa App to link the account and make sure to give event permissions.');
+        defer.reject();
+    }
+    return defer.promise;
+};
+
 MyObject.prototype.intentHandlers = {
     "AMAZON.RepeatIntent": function (intent, session, response) {
         if (session.attributes.speak === 'help' && session.attributes.repeat) {
@@ -145,42 +170,14 @@ MyObject.prototype.intentHandlers = {
 
     "upcomingIntent": function (intent, session, response) {
         var self = this;
-        console.log('Searching for next upcoming ');
-        var fb = this.getFBManager(session);
-        var p = fb.getAllEvents();
-        p.then(function (arr) {
-            console.log("Setting events...");
-            var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
-            myDatabase.setEvents(events, session.user.accessToken);
-            if (events && events.length) {
-                var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
-                if (events.length > 1) {
-                    msg += hearMore;
-                }
-                session.attributes.speak = "event";
-                session.attributes.lastEventIndex = 0;
-                response.ask(msg);
-            } else {
-                response.tell("Sorry, no events found");
-            }
-        });
-    },
-    "searchIntent": function (intent, session, response) {
-        var self = this;
-        var slotValue = intent.slots.date.value;
-        console.log('searchIntent for ' + slotValue);
-        slotValue = getDateFromSlot(slotValue);
-        var fb = this.getFBManager(session);
-
-        if (slotValue.error) {
-            response.tell(slotValue.error);
-        } else {
-            console.log('Searching between ' + slotValue.startDate + '     ' + slotValue.endDate);
+        this.hasToken(intent, session, response).then((function () {
+            console.log('Searching for next upcoming ');
+            var fb = this.getFBManager(session);
             var p = fb.getAllEvents();
             p.then(function (arr) {
-                var events = fb.findEvents(slotValue.startDate, slotValue.endDate);
+                console.log("Setting events...");
+                var events = fb.findEvents(new Date(), moment().add(1, 'years').toDate());
                 myDatabase.setEvents(events, session.user.accessToken);
-                console.log(events);
                 if (events && events.length) {
                     var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
                     if (events.length > 1) {
@@ -193,22 +190,83 @@ MyObject.prototype.intentHandlers = {
                     response.tell("Sorry, no events found");
                 }
             });
-        }
+        }).bind(this, intent, session, response));
+    },
+    "searchIntent": function (intent, session, response) {
+        this.hasToken(intent, session, response).then((function () {
+            var self = this;
+            var slotValue = intent.slots.date.value;
+            console.log('searchIntent for ' + slotValue);
+            slotValue = getDateFromSlot(slotValue);
+            var fb = this.getFBManager(session);
+
+            if (slotValue.error) {
+                response.tell(slotValue.error);
+            } else {
+                console.log('Searching between ' + slotValue.startDate + '     ' + slotValue.endDate);
+                var p = fb.getAllEvents();
+                p.then(function (arr) {
+                    var events = fb.findEvents(slotValue.startDate, slotValue.endDate);
+                    myDatabase.setEvents(events, session.user.accessToken);
+                    console.log(events);
+                    if (events && events.length) {
+                        var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
+                        if (events.length > 1) {
+                            msg += hearMore;
+                        }
+                        session.attributes.speak = "event";
+                        session.attributes.lastEventIndex = 0;
+                        response.ask(msg);
+                    } else {
+                        response.tell("Sorry, no events found");
+                    }
+                });
+            }
+        }).bind(this, intent, session, response));
     },
     "nextEventIntent": function (intent, session, response) {
-        var reprompt = " Would you like to hear another event? ";
-        if (typeof session.attributes.lastEventIndex != 'undefined') {
-            var index = session.attributes.lastEventIndex + 1;
+        this.hasToken(intent, session, response).then((function () {
+            var reprompt = " Would you like to hear another event? ";
+            if (typeof session.attributes.lastEventIndex != 'undefined') {
+                var index = session.attributes.lastEventIndex + 1;
+                var promise = myDatabase.getEvents(session.user.accessToken);
+                promise.then(function (relevantEvents) {
+                    console.log("Next event (eventInfo) : " + relevantEvents.length);
+
+                    if (relevantEvents[index]) {
+                        // use the slot value as an index to retrieve description from our relevant array
+                        var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name);
+                        if (index < relevantEvents.length - 1) {
+                            output += hearMore;
+                        }
+                        session.attributes.speak = "event";
+                        session.attributes.lastEventIndex = index;
+                        response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                    } else {
+                        session.attributes.speak = undefined;
+                        session.attributes.lastEventIndex = -1;
+                        response.tell(eventOutOfRange);
+                    }
+                });
+            } else {
+                response.tell("There is no next event. You can use the phrase \"tell me about event three\" to know more about that event or ask for upcoming events.")
+            }
+        }).bind(this, intent, session, response));
+    },
+    "eventIntent": function (intent, session, response) {
+        this.hasToken(intent, session, response).then((function () {
+            var reprompt = " Would you like to hear another event? ";
+            var slotValue = intent.slots.number.value;
+
+            // parse slot value
+            var index = parseInt(slotValue) - 1;
             var promise = myDatabase.getEvents(session.user.accessToken);
             promise.then(function (relevantEvents) {
-                console.log("Next event (eventInfo) : " + relevantEvents.length);
+                console.log("Stored events (eventInfo) : " + relevantEvents);
 
                 if (relevantEvents[index]) {
                     // use the slot value as an index to retrieve description from our relevant array
-                    var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name);
-                    if (index < relevantEvents.length - 1) {
-                        output += hearMore;
-                    }
+                    var output = "Event " + slotValue + ", " + removeTags(relevantEvents[index].name) + " is about " + removeTags(relevantEvents[index].description);
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = index;
                     response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
@@ -218,98 +276,77 @@ MyObject.prototype.intentHandlers = {
                     response.tell(eventOutOfRange);
                 }
             });
-        } else {
-            response.tell("There is no next event. You can use the phrase \"tell me about event three\" to know more about that event or ask for upcoming events.")
-        }
-    },
-    "eventIntent": function (intent, session, response) {
-        var reprompt = " Would you like to hear another event? ";
-        var slotValue = intent.slots.number.value;
-
-        // parse slot value
-        var index = parseInt(slotValue) - 1;
-        var promise = myDatabase.getEvents(session.user.accessToken);
-        promise.then(function (relevantEvents) {
-            console.log("Stored events (eventInfo) : " + relevantEvents);
-
-            if (relevantEvents[index]) {
-                // use the slot value as an index to retrieve description from our relevant array
-                var output = "Event " + slotValue + ", " + removeTags(relevantEvents[index].name) + " is about " + removeTags(relevantEvents[index].description);
-                session.attributes.speak = "event";
-                session.attributes.lastEventIndex = index;
-                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
-            } else {
-                session.attributes.speak = undefined;
-                session.attributes.lastEventIndex = -1;
-                response.tell(eventOutOfRange);
-            }
-        });
+        }).bind(this, intent, session, response));
     },
     "whereIntent": function (intent, session, response) {
-        var reprompt = " Would you like to hear another event?";
-        var slotValue = intent.slots.number.value;
+        this.hasToken(intent, session, response).then((function () {
+            var reprompt = " Would you like to hear another event?";
+            var slotValue = intent.slots.number.value;
 
-        // parse slot value
-        var index = parseInt(slotValue) - 1;
-        var promise = myDatabase.getEvents(session.user.accessToken);
-        var lastIndex = session.attributes.lastEventIndex;
-        promise.then(function (relevantEvents) {
-            console.log("Stored events (where) : " + relevantEvents.length + "   " + index);
+            // parse slot value
+            var index = parseInt(slotValue) - 1;
+            var promise = myDatabase.getEvents(session.user.accessToken);
+            var lastIndex = session.attributes.lastEventIndex;
+            promise.then(function (relevantEvents) {
+                console.log("Stored events (where) : " + relevantEvents.length + "   " + index);
 
-            if (isNaN(index)) {
-                if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
-                    index = lastIndex;
+                if (isNaN(index)) {
+                    if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                        index = lastIndex;
+                    }
                 }
-            }
-            if (relevantEvents[index]) {
-                // use the slot value as an index to retrieve description from our relevant array
-                var output = "The event, " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.name) + " , ";
-                if (relevantEvents[index].place.location && relevantEvents[index].place.location.street) {
-                    output += removeTags(relevantEvents[index].place.location.street) + ", "
+                if (relevantEvents[index]) {
+                    // use the slot value as an index to retrieve description from our relevant array
+                    var output = "The event, " + relevantEvents[index].name + " is at " + removeTags(relevantEvents[index].place.name) + " , ";
+                    if (relevantEvents[index].place.location && relevantEvents[index].place.location.street) {
+                        output += removeTags(relevantEvents[index].place.location.street) + ", "
+                    }
+                    if (relevantEvents[index].place.location && relevantEvents[index].place.location.city) {
+                        output += removeTags(relevantEvents[index].place.location.city) + ", "
+                    }
+                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                } else {
+                    session.attributes.speak = undefined;
+                    session.attributes.lastEventIndex = -1;
+                    response.tell(eventOutOfRange);
                 }
-                if (relevantEvents[index].place.location && relevantEvents[index].place.location.city) {
-                    output += removeTags(relevantEvents[index].place.location.city) + ", "
-                }
-                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
-            } else {
-                session.attributes.speak = undefined;
-                session.attributes.lastEventIndex = -1;
-                response.tell(eventOutOfRange);
-            }
-        });
+            });
+        }).bind(this, intent, session, response));
     },
     "whenIntent": function (intent, session, response) {
-        var reprompt = " Would you like to hear another event?";
-        var slotValue = intent.slots.number.value;
+        this.hasToken(intent, session, response).then((function () {
+            var reprompt = " Would you like to hear another event?";
+            var slotValue = intent.slots.number.value;
 
-        // parse slot value
-        var index = parseInt(slotValue) - 1;
-        var promise = myDatabase.getEvents(session.user.accessToken);
-        var lastIndex = session.attributes.lastEventIndex;
-        promise.then(function (relevantEvents) {
-            console.log("Stored events (when) : " + relevantEvents.length + "     " + index);
+            // parse slot value
+            var index = parseInt(slotValue) - 1;
+            var promise = myDatabase.getEvents(session.user.accessToken);
+            var lastIndex = session.attributes.lastEventIndex;
+            promise.then(function (relevantEvents) {
+                console.log("Stored events (when) : " + relevantEvents.length + "     " + index);
 
-            if (isNaN(index)) {
-                if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
-                    index = lastIndex;
+                if (isNaN(index)) {
+                    if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                        index = lastIndex;
+                    }
                 }
-            }
 
-            if (relevantEvents[index]) {
-                // use the slot value as an index to retrieve description from our relevant array
-                var when = " is probably the complete day.";
-                console.log(relevantEvents[index].start_time);
-                if (relevantEvents[index].start_time) {   //not all events have a start time
-                    when = " is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
+                if (relevantEvents[index]) {
+                    // use the slot value as an index to retrieve description from our relevant array
+                    var when = " is probably the complete day.";
+                    console.log(relevantEvents[index].start_time);
+                    if (relevantEvents[index].start_time) {   //not all events have a start time
+                        when = " is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
+                    }
+                    var output = "The event, " + relevantEvents[index].name + when;
+                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                } else {
+                    session.attributes.speak = undefined;
+                    session.attributes.lastEventIndex = -1;
+                    response.tell(eventOutOfRange);
                 }
-                var output = "The event, " + relevantEvents[index].name + when;
-                response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
-            } else {
-                session.attributes.speak = undefined;
-                session.attributes.lastEventIndex = -1;
-                response.tell(eventOutOfRange);
-            }
-        });
+            });
+        }).bind(this, intent, session, response));
     }
 };
 

@@ -1,12 +1,43 @@
 var https = require('https');
 var q = require('q');
 var request = require('request-promise');
+var errors = require('request-promise/errors');
 var moment = require('moment');
 
 function FbManager(accessToken) {
     this.accessToken = accessToken;
     this.events = [];
 }
+
+FbManager.prototype.hasAppropriatePermissions = function () {
+    "use strict";
+    var defer = q.defer();
+    var promise = request('https://graph.facebook.com/me/permissions?access_token=' + this.accessToken);
+    promise
+        .then(function (resp) {
+            resp = JSON.parse(resp);
+            var dec = resp.data.filter(function (ss) {
+                return ss.status === 'declined';
+            });
+            if (dec.length) {
+                defer.reject("not-enough-permissions");
+            } else {
+                defer.resolve();
+            }
+        })
+        .catch(function (err) {
+            var json = JSON.parse(err.response.body);
+            console.log("Facebook connection error : ");
+            console.log(json.error);
+            if (json.error.message.indexOf('Error validating access token:') > -1) {
+                defer.reject("invalid-token");
+            } else {
+                defer.reject("not-enough-permissions");
+            }
+        });
+    return defer.promise;
+};
+
 FbManager.prototype.getAllEvents = function () {
     var self = this;
     var promises = [];
