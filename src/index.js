@@ -60,14 +60,16 @@ MyObject.prototype.getFBManager = function (session) {
 };
 
 MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, response) {
-    var speechOutput = {
-        speech: "<speak>" + welcomeMessage + "</speak>",
-        type: AlexaSkill.speechOutputType.SSML
-    };
-    response.ask(speechOutput);
+    this.hasToken(null, session, response).then((function () {
+        var speechOutput = {
+            speech: "<speak>" + welcomeMessage + "</speak>",
+            type: AlexaSkill.speechOutputType.SSML
+        };
+        response.ask(speechOutput);
 
-    console.log("onLaunch requestId: " + launchRequest.requestId
-        + ", sessionId: " + session.sessionId);
+        console.log("onLaunch requestId: " + launchRequest.requestId
+            + ", sessionId: " + session.sessionId);
+    }).bind(this, null, session, response));
 };
 
 MyObject.prototype.hasToken = function (intent, session, response) {
@@ -108,6 +110,9 @@ MyObject.prototype.intentHandlers = {
         response.tell(shutdownMessage);
     },
     "AMAZON.StopIntent": function (intent, session, response) {
+        this.intentHandlers["AMAZON.NoIntent"].call(this, intent, session, response);
+    },
+    "AMAZON.CancelIntent": function (intent, session, response) {
         this.intentHandlers["AMAZON.NoIntent"].call(this, intent, session, response);
     },
     "AMAZON.YesIntent": function (intent, session, response) {
@@ -180,12 +185,14 @@ MyObject.prototype.intentHandlers = {
                 myDatabase.setEvents(events, session.user.accessToken);
                 if (events && events.length) {
                     var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
-                    if (events.length > 1) {
-                        msg += hearMore;
-                    }
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = 0;
-                    response.ask(msg);
+                    if (events.length > 1) {
+                        msg += hearMore;
+                        response.ask(msg);
+                    } else {
+                        response.tell(msg);
+                    }
                 } else {
                     response.tell("Sorry, no events found");
                 }
@@ -211,12 +218,14 @@ MyObject.prototype.intentHandlers = {
                     console.log(events);
                     if (events && events.length) {
                         var msg = "Total " + events.length + " events found. Number one is, " + events[0].name;
-                        if (events.length > 1) {
-                            msg += hearMore;
-                        }
                         session.attributes.speak = "event";
                         session.attributes.lastEventIndex = 0;
-                        response.ask(msg);
+                        if (events.length > 1) {
+                            msg += hearMore;
+                            response.ask(msg);
+                        } else {
+                            response.tell(msg);
+                        }
                     } else {
                         response.tell("Sorry, no events found");
                     }
@@ -226,7 +235,6 @@ MyObject.prototype.intentHandlers = {
     },
     "nextEventIntent": function (intent, session, response) {
         this.hasToken(intent, session, response).then((function () {
-            var reprompt = " Would you like to hear another event? ";
             if (typeof session.attributes.lastEventIndex != 'undefined') {
                 var index = session.attributes.lastEventIndex + 1;
                 var promise = myDatabase.getEvents(session.user.accessToken);
@@ -236,12 +244,14 @@ MyObject.prototype.intentHandlers = {
                     if (relevantEvents[index]) {
                         // use the slot value as an index to retrieve description from our relevant array
                         var output = "Number " + (index + 1) + " event is, " + removeTags(relevantEvents[index].name);
-                        if (index < relevantEvents.length - 1) {
-                            output += hearMore;
-                        }
                         session.attributes.speak = "event";
                         session.attributes.lastEventIndex = index;
-                        response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                        if (index < relevantEvents.length - 1) {
+                            output += hearMore;
+                            response.askWithCard(output, relevantEvents[index].summary, output);
+                        } else {
+                            response.tell(output);
+                        }
                     } else {
                         session.attributes.speak = undefined;
                         session.attributes.lastEventIndex = -1;
@@ -255,7 +265,6 @@ MyObject.prototype.intentHandlers = {
     },
     "eventIntent": function (intent, session, response) {
         this.hasToken(intent, session, response).then((function () {
-            var reprompt = " Would you like to hear another event? ";
             var slotValue = intent.slots.number.value;
 
             // parse slot value
@@ -269,7 +278,7 @@ MyObject.prototype.intentHandlers = {
                     var output = "Event " + slotValue + ", " + removeTags(relevantEvents[index].name) + " is about " + removeTags(relevantEvents[index].description);
                     session.attributes.speak = "event";
                     session.attributes.lastEventIndex = index;
-                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                    response.tellWithCard(output, relevantEvents[index].summary, output);
                 } else {
                     session.attributes.speak = undefined;
                     session.attributes.lastEventIndex = -1;
@@ -280,7 +289,6 @@ MyObject.prototype.intentHandlers = {
     },
     "whereIntent": function (intent, session, response) {
         this.hasToken(intent, session, response).then((function () {
-            var reprompt = " Would you like to hear another event?";
             var slotValue = intent.slots.number.value;
 
             // parse slot value
@@ -304,7 +312,7 @@ MyObject.prototype.intentHandlers = {
                     if (relevantEvents[index].place.location && relevantEvents[index].place.location.city) {
                         output += removeTags(relevantEvents[index].place.location.city) + ", "
                     }
-                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                    response.tellWithCard(output, relevantEvents[index].summary, output);
                 } else {
                     session.attributes.speak = undefined;
                     session.attributes.lastEventIndex = -1;
@@ -315,7 +323,6 @@ MyObject.prototype.intentHandlers = {
     },
     "whenIntent": function (intent, session, response) {
         this.hasToken(intent, session, response).then((function () {
-            var reprompt = " Would you like to hear another event?";
             var slotValue = intent.slots.number.value;
 
             // parse slot value
@@ -339,7 +346,7 @@ MyObject.prototype.intentHandlers = {
                         when = " is on " + moment(relevantEvents[index].start_time).format('MMMM Do, h:mm a');
                     }
                     var output = "The event, " + relevantEvents[index].name + when;
-                    response.askWithCard(output, reprompt, relevantEvents[index].summary, output);
+                    response.tellWithCard(output, relevantEvents[index].summary, output);
                 } else {
                     session.attributes.speak = undefined;
                     session.attributes.lastEventIndex = -1;
