@@ -145,7 +145,12 @@ Response.prototype = (function () {
                 title: options.cardTitle,
                 content: options.cardContent
             };
+        } else if (options.cardType === 'LinkAccount') {
+            alexaResponse.card = {
+                type: 'LinkAccount'
+            };
         }
+
         var returnResult = {
             version: '1.0',
             response: alexaResponse
@@ -177,23 +182,25 @@ Response.prototype = (function () {
             this._context.succeed(buildSpeechletResponse({
                 session: this._session,
                 output: speechOutput,
-                // cardType: "LinkAccount",
+                cardType: "LinkAccount",
                 shouldEndSession: true
             }));
         },
-        ask: function (speechOutput) {
+        ask: function (speechOutput, repromptSpeech) {
             this._context.succeed(buildSpeechletResponse({
                 session: this._session,
                 output: speechOutput,
+                reprompt: repromptSpeech,
                 shouldEndSession: false
             }));
         },
-        askWithCard: function (speechOutput, cardTitle, cardContent) {
+        askWithCard: function (speechOutput, cardTitle, cardContent, repromptSpeech) {
             this._context.succeed(buildSpeechletResponse({
                 session: this._session,
                 output: speechOutput,
                 cardTitle: cardTitle,
                 cardContent: cardContent,
+                reprompt: repromptSpeech,
                 shouldEndSession: false
             }));
         }

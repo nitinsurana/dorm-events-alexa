@@ -65,7 +65,7 @@ MyObject.prototype.eventHandlers.onLaunch = function (launchRequest, session, re
             speech: "<speak>" + welcomeMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
 
         console.log("onLaunch requestId: " + launchRequest.requestId
             + ", sessionId: " + session.sessionId);
@@ -103,6 +103,8 @@ MyObject.prototype.intentHandlers = {
             var repeat = session.attributes.repeat;
             delete session.attributes.repeat;
             this.intentHandlers[repeat].call(this, intent, session, response);
+        } else {
+            response.tell("Sorry, there is no help message to repeat.");
         }
     },
     "AMAZON.NoIntent": function (intent, session, response) {
@@ -118,12 +120,11 @@ MyObject.prototype.intentHandlers = {
     "AMAZON.YesIntent": function (intent, session, response) {
         if (session.attributes.speak === "event" && session.attributes.lastEventIndex >= 0) {
             this.intentHandlers["nextEventIntent"].call(this, intent, session, response);
-        } else if (session.attributes.speak === 'help') {
+            // } else if (session.attributes.speak === 'help') {
+        } else {
             this.intentHandlers["AMAZON.RepeatIntent"].call(this, intent, session, response);
         }
     },
-
-
     "AMAZON.HelpIntent": function (intent, session, response) {
         return this.intentHandlers.helpIntent(intent, session, response);
     },
@@ -133,7 +134,7 @@ MyObject.prototype.intentHandlers = {
             speech: "<speak>" + helpPrimaryMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
     },
     "helpIntentHappening": function (intent, session, response) {
         session.attributes.speak = "help";
@@ -142,7 +143,7 @@ MyObject.prototype.intentHandlers = {
             speech: "<speak>" + helpHappeningMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
     },
     "helpIntentDescribe": function (intent, session, response) {
         session.attributes.speak = "help";
@@ -151,7 +152,7 @@ MyObject.prototype.intentHandlers = {
             speech: "<speak>" + helpDescribeMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
     },
     "helpIntentPlace": function (intent, session, response) {
         session.attributes.speak = "help";
@@ -160,7 +161,7 @@ MyObject.prototype.intentHandlers = {
             speech: "<speak>" + helpPlaceMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
     },
     "helpIntentTime": function (intent, session, response) {
         session.attributes.speak = "help";
@@ -169,7 +170,7 @@ MyObject.prototype.intentHandlers = {
             speech: "<speak>" + helpTimeMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
-        response.ask(speechOutput);
+        response.ask(speechOutput, speechOutput);
     },
 
 
@@ -189,7 +190,7 @@ MyObject.prototype.intentHandlers = {
                     session.attributes.lastEventIndex = 0;
                     if (events.length > 1) {
                         msg += hearMore;
-                        response.ask(msg);
+                        response.ask(msg, msg);
                     } else {
                         response.tell(msg);
                     }
@@ -203,6 +204,10 @@ MyObject.prototype.intentHandlers = {
         this.hasToken(intent, session, response).then((function () {
             var self = this;
             var slotValue = intent.slots.date.value;
+            if (slotValue == undefined) {
+                this.intentHandlers["helpIntentHappening"].call(this, intent, session, response);
+                return;
+            }
             console.log('searchIntent for ' + slotValue);
             slotValue = getDateFromSlot(slotValue);
             var fb = this.getFBManager(session);
@@ -222,7 +227,7 @@ MyObject.prototype.intentHandlers = {
                         session.attributes.lastEventIndex = 0;
                         if (events.length > 1) {
                             msg += hearMore;
-                            response.ask(msg);
+                            response.ask(msg, msg);
                         } else {
                             response.tell(msg);
                         }
@@ -248,7 +253,7 @@ MyObject.prototype.intentHandlers = {
                         session.attributes.lastEventIndex = index;
                         if (index < relevantEvents.length - 1) {
                             output += hearMore;
-                            response.askWithCard(output, relevantEvents[index].summary, output);
+                            response.askWithCard(output, relevantEvents[index].summary, output, output);
                         } else {
                             response.tell(output);
                         }
