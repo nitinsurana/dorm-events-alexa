@@ -12,8 +12,8 @@ var http = require('http')
 var dateOutOfRange = "Sorry, could not understand the date. ";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
 var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, <break time=\"1ms\"/> their location  <break time=\"1ms\"/> and timing.";
-var eventOutOfRange = "Event number is out of range please choose another event";
-var repeatMessage = ". Would you like me to repeat ?";
+var eventOutOfRange = "Sorry event number not found, please select another event.";
+var repeatMessage = " Would you like me to repeat ?";
 var shutdownMessage = "Ok see you again soon.";
 var helpPrimaryMessage = "What <break time=\"1ms\"/> would you like to know about <break time=\"2ms\"/>" +
     "Number one Events happening <break time=\"1ms\"/>" +
@@ -22,7 +22,7 @@ var helpPrimaryMessage = "What <break time=\"1ms\"/> would you like to know abou
     "Number four timing <break time=\"1ms\"/>" +
     "You can also say, stop, if you're done. " +
     "So, how can I help ?";
-var helpHappeningMessage = "Here are some things you can ask : " +
+var helpHappeningMessage = " Here are some things you can ask : " +
     "what are the upcoming events <break time=\"1ms\"/>" +
     "whats happening today <break time=\"1ms\"/>" +
     "whats happening next week <break time=\"1ms\"/>" +
@@ -136,11 +136,12 @@ MyObject.prototype.intentHandlers = {
         };
         response.ask(speechOutput, speechOutput);
     },
-    "helpIntentHappening": function (intent, session, response) {
+    "helpIntentHappening": function (intent, session, response, additionalMessage) {
         session.attributes.speak = "help";
         session.attributes.repeat = "helpIntentHappening";
+        additionalMessage = additionalMessage || '';
         var speechOutput = {
-            speech: "<speak>" + helpHappeningMessage + "</speak>",
+            speech: "<speak>" + additionalMessage + helpHappeningMessage + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
         response.ask(speechOutput, speechOutput);
@@ -195,7 +196,7 @@ MyObject.prototype.intentHandlers = {
                         response.tell(msg);
                     }
                 } else {
-                    response.tell("Sorry, no events found");
+                    response.tell("Sorry, no events found.");
                 }
             });
         }).bind(this, intent, session, response));
@@ -205,7 +206,7 @@ MyObject.prototype.intentHandlers = {
             var self = this;
             var slotValue = intent.slots.date.value;
             if (slotValue == undefined || slotValue == '') {
-                this.intentHandlers["helpIntentHappening"].call(this, intent, session, response);
+                this.intentHandlers["helpIntentHappening"].call(this, intent, session, response, dateOutOfRange);
                 return;
             }
             console.log('searchIntent for ' + slotValue);
@@ -304,7 +305,9 @@ MyObject.prototype.intentHandlers = {
                 console.log("Stored events (where) : " + relevantEvents.length + "   " + index);
 
                 if (isNaN(index)) {
-                    if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                    if (lastIndex == undefined && relevantEvents.length == 1) {
+                        index = 0;
+                    } else if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
                         index = lastIndex;
                     }
                 }
@@ -338,7 +341,9 @@ MyObject.prototype.intentHandlers = {
                 console.log("Stored events (when) : " + relevantEvents.length + "     " + index);
 
                 if (isNaN(index)) {
-                    if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
+                    if (lastIndex == undefined && relevantEvents.length == 1) {
+                        index = 0;
+                    } else if (lastIndex >= 0 && lastIndex < relevantEvents.length && relevantEvents[lastIndex]) {
                         index = lastIndex;
                     }
                 }
