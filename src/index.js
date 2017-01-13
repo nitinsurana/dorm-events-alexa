@@ -9,7 +9,7 @@ var http = require('http')
     , myDatabase = new (require('./mydatabase'))('dynamoDB')
     , fbManager = require('./fb_manager');
 
-var dateOutOfRange = "Date is out of range please choose another date";
+var dateOutOfRange = "Sorry, could not understand the date. ";
 var noAccessToken = "Your facebook integration is broken, please disable and then re-enable this skill in your Alexa app.";
 var welcomeMessage = "Welcome to Dorm Events. It can tell you all about upcoming events, <break time=\"1ms\"/> their location  <break time=\"1ms\"/> and timing.";
 var eventOutOfRange = "Event number is out of range please choose another event";
@@ -204,7 +204,7 @@ MyObject.prototype.intentHandlers = {
         this.hasToken(intent, session, response).then((function () {
             var self = this;
             var slotValue = intent.slots.date.value;
-            if (slotValue == undefined) {
+            if (slotValue == undefined || slotValue == '') {
                 this.intentHandlers["helpIntentHappening"].call(this, intent, session, response);
                 return;
             }
@@ -400,7 +400,7 @@ function getDateFromSlot(rawDate) {
             eventDate["endDate"] = new Date(dates.endDate);
             // anything else would be out of range for this skill
         } else {
-            eventDate["error"] = dateOutOfRange;
+            eventDate["error"] = dateOutOfRange + " " + helpHappeningMessage;
         }
         // original slot value was parsed correctly
     } else {
