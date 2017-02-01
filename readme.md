@@ -2,6 +2,8 @@
 
 This amazon alexa skill read all events associated with all the groups a user is associated with, by integrating with facebook. And then answers users queries related to these events' time, place & location.
 
+This skill won the MindSumo Amazon Alexa Challenge - https://www.mindsumo.com/contests/hack-the-dorm#leaderboard
+
 ## Some quick queries which can be answered :
 
 * what is the next upcoming event
